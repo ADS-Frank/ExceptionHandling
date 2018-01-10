@@ -77,10 +77,6 @@ DO - Wrap underlying exceptions which may be thrown by the code.  This will atta
  */
 public int getLastFourDigitsOfSSN(String ssn) throws InvalidSSNException {
     try {
-        if (ssn == null) throw SSNNullException("The ssn passed in was null.");
-
-        if (ssn.length() != 9) throw SSNLengthException("The length of the SSN was not 9.");
-
         return Integer.valueOf(ssn) % 1000;
 
     } catch (NumberFormatException nfe) {
