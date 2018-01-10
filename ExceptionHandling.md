@@ -1,11 +1,11 @@
 # Exception Handling Do's Vs. Don'ts
 
 ## Table of Contents
-1. [Use Specific Exceptions](###use-specific-exeptions)
-2. [Wrap Underlying Exceptions](###wrap-underlying-exceptions)
+1. [Use Specific Exceptions](#e1)
+2. [Wrap Underlying Exceptions](#e2)
 
 
-### Use Specific Exceptions
+### Use Specific Exceptions <a name="e1"></a>
 
 DO - Throw exception instances that are specific and descriptive of the underlying reason for why an exception was thrown.
 
@@ -50,4 +50,4 @@ public String toUpperCase(String str) throws Exception {
 
 ```
 
-### Wrap Underlying Exceptions
+### Wrap Underlying Exceptions <a name="e2"></a>
