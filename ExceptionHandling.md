@@ -12,6 +12,18 @@ an example for a proper use, and an example for improper use.
 2. [Wrap Underlying Exceptions](#e2)
 3. [Avoid Runtime Exceptions](#e3)
 4. [Document Exceptions](#e4)
+5. [Catch Specific Exceptions](#e5)
+6. [Caller Catches Exceptions](#e6)
+7. [Callee Makes No Assumptions of Input](#e7)
+8. [Return Only Valid Things](#e8)
+9. [Prevent Normal Execution on Error](#e9)
+10. [Push Error Handling Responsibility Upwards](#e10)
+11. [Logging and Throwing](#e11)
+12. [Always include Message](#e12)
+13. [Treating Runtime Exceptions](#e13)
+14. [Exception Logging](#e14)
+15. [Finally Blocks](#e15)
+16. [RuntimeExceptions in the JDK](#e16)
 
 
 ### <a name="e1"></a> Use Specific Exceptions
