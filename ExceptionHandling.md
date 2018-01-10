@@ -228,3 +228,16 @@ public Account retrieveAccount(int accountNumber) throws InvalidInputException, 
     }
 }
 ```
+
+### <a name="e5"></a> Catch Specific Exceptions
+### <a name="e6"></a> Caller Catches Exceptions
+### <a name="e7"></a> Callee Makes No Assumptions of Input
+### <a name="e8"></a> Return Only Valid Things
+### <a name="e9"></a> Prevent Normal Execution on Error
+### <a name="e10"></a> Push Error Handling Responsibility Upwards
+### <a name="e11"></a> Logging and Throwing
+### <a name="e12"></a> Always include Message
+### <a name="e13"></a> Treating Runtime Exceptions
+### <a name="e14"></a> Exception Logging
+### <a name="e15"></a> Finally Blocks
+### <a name="e16"></a> RuntimeExceptions in the JDK
