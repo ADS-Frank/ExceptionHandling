@@ -43,7 +43,8 @@ DO - Define custom types to represent specific exceptions.
  */
 public String toUpperCase(String str) throws NullStringException {
     if (str == null) {
-        throw new NullStringException("method expects a string who's value is not null.");
+        throw new NullStringException(
+            "method expects a string who's value is not null.");
     }
 
     return str.toUpperCase();
@@ -157,7 +158,7 @@ and thus without the programmers knowledge, could change the execution of the pr
 /**
  * ... Class Description Here ...
  */
-class InvalidSSNException extends RuntimeException { // <- unchecked by the compiler
+class InvalidSSNException extends RuntimeException { // <- unchecked by compiler
     // ...
 }
 
@@ -197,16 +198,19 @@ DO - Document all public methods with docstrings. In the docstrings add document
  *
  * @throws SystemUnavailableException - If the system was unavailable at the time of call.
  */
-public Account retrieveAccount(int accountNumber) throws InvalidInputException, SystemUnavailableException {
+public Account retrieveAccount(int accountNumber)
+        throws InvalidInputException, SystemUnavailableException {
     if (!valid(accountNumber)) {
-        throw InvalidInputException("The input account number was not a valid account number.");
+        throw InvalidInputException(
+            "The input account number was not a valid account number.");
     }
 
     try {
         return backend.retrieveFromDatabase(accountNumber);
 
     } catch (HttpResponseException hre) {
-        throw new SystemUnavailableException("The system was unavailable at this time.", hre);
+        throw new SystemUnavailableException(
+            "The system was unavailable at this time.", hre);
     }
 }
 ```
@@ -215,7 +219,8 @@ DONT - Undocument exceptions in methods.  This will force the programmer to unde
 
 ```java
 // Missing a docstring!
-public Account retrieveAccount(int accountNumber) throws InvalidInputException, SystemUnavailableException {
+public Account retrieveAccount(int accountNumber)
+        throws InvalidInputException, SystemUnavailableException {
     if (!valid(accountNumber)) {
         throw InvalidInputException("The input account number was not a valid account number.");
     }
@@ -305,7 +310,8 @@ public void displayUser(byte[] accountNumber) {
 /**
  * Gets the user from the database.
  */
-public User retrieveUser(byte[] accountNumber) throws ServerUnavailableException {
+public User retrieveUser(byte[] accountNumber)
+        throws ServerUnavailableException {
     try {
         Response resp = httpCall('/someUrl', toJson(accountNumber));
         return parseToUser(resp);
@@ -333,7 +339,8 @@ public void displayUser(byte[] accountNumber) {
 /**
  * Gets the user from the database.
  */
-public User retrieveUser(byte[] accountNumber) throws ServerUnavailableException {
+public User retrieveUser(byte[] accountNumber)
+        throws ServerUnavailableException {
     try {
         Response resp = httpCall('/someUrl', toJson(accountNumber));
         return parseToUser(resp);
@@ -405,7 +412,79 @@ public String httpCall(String url) throws PageNotFoundException {
     return doGET(fullUrl);
 }
 ```
+
+
 ### <a name="e8"></a> Return Only Valid Things
+
+DO - Return only object that can be used by calling code.
+
+```java
+/**
+ * Displays the contents of a web page given a url.
+ */
+public void urlClicked(String url) {
+    url = nullRemove(url);
+
+    try {
+        String response = httpCall(url);
+        setBodyOfPage(response);
+
+    } catch (PageNotFoundException e) {
+        log(e);
+        message("...");
+    }
+}
+
+/**
+ * HTTP Call method.
+ *
+ * This method assumes that url is not null.
+ */
+public String httpCall(String url) throws PageNotFoundException {
+    String fullUrl = "http://" + url.toLowerCase();
+    return doGET(fullUrl);
+}
+```
+
+DONT - Refrain from returning objects / data who's validity must be checked.
+
+```java
+/**
+ * Displays the contents of a web page given a url.
+ */
+public void urlClicked(String url) {
+    url = nullRemove(url);
+
+    // No Documented Exceptions!  Without knowing caller will assume that
+    // the return value was ok to use.
+    String response = httpCall(url);
+
+    // When knowing the caller has lost the ability to manipulate the exception
+    // and react to their circumstance.
+    if (response == null) {
+        messageUser("...");
+        return;
+    }
+
+    setBodyOfPage(response);
+}
+
+/**
+ * HTTP Call method.
+ *
+ * This method assumes that url is not null.
+ */
+public String httpCall(String url) {
+    String fullUrl = "http://" + url.toLowerCase();
+    try {
+        return doGET(fullUrl);
+    } catch (PageNotFoundException e) {
+        log(e);
+        return null;
+    }
+}
+```
+
 ### <a name="e9"></a> Prevent Normal Execution on Error
 ### <a name="e10"></a> Push Error Handling Responsibility Upwards
 ### <a name="e11"></a> Logging and Throwing
