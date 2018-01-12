@@ -16,7 +16,7 @@ an example for a proper use, and an example for improper use.
 6. [Caller Catches Exceptions](#e6)
 7. [Assumptions of Input](#e7)
 8. [Return Only Valid Things](#e8)
-9. [Prevent Normal Execution on Error](#e9)
+9. [Separate Exception Handling Code](#e9)
 10. [Push Error Handling Responsibility Upwards](#e10)
 11. [Logging and Throwing](#e11)
 12. [Always include Message](#e12)
@@ -485,7 +485,73 @@ public String httpCall(String url) {
 }
 ```
 
-### <a name="e9"></a> Prevent Normal Execution on Error
+### <a name="e9"></a> Separate Exception Handling Code
+
+DO - Separate excetion handling code away from busines logic.
+
+```java
+/**
+ * Routine for crediting an account.
+ */
+public void creditAccount(byte[] accountNumber, int amount) {
+    try {
+        beginTransaction();
+
+        Account account = retrieveAccount(accountNumber);
+
+        account.credit(amount);
+
+        commitTransaction();
+
+    } catch (AccountNumberNotFoundException annfe) {
+        // ...
+    } catch (AccountNumberNullException anne) {
+        // ...
+    } catch (TransactionRollbackException tre) {
+        // ...
+    } catch (InvalidBalanceException ibe) {
+        // ...
+    }
+}
+```
+
+DONT - Mix exception handling code and busienss logic.
+
+```java
+/**
+ * Routine for crediting an account.
+ */
+public void creditAccount(byte[] accountNumber, int amount) {
+    beginTransaction();
+
+    Account account = null;
+
+    try {
+        account = retrieveAccount(accountNumber);
+    } catch (AccountNumberNotFoundException annfe) {
+        // ...
+        return;
+    } catch (AccountNumberNullException anne) {
+        // ...
+        return;
+    }
+
+    try {
+        account.credit(amount);
+    } catch (InvalidBalanceException ibe) {
+        // ...
+        return;
+    }
+
+    try {
+        commitTransaction();
+    } catch (TransactionRollbackException tre) {
+        // ...
+        return;
+    }
+}
+```
+
 ### <a name="e10"></a> Push Error Handling Responsibility Upwards
 ### <a name="e11"></a> Logging and Throwing
 ### <a name="e12"></a> Always include Message
