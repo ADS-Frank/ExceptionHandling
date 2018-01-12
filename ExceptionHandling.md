@@ -17,11 +17,9 @@ an example for a proper use, and an example for improper use.
 7. [Assumptions of Input](#e7)
 8. [Return Only Valid Things](#e8)
 9. [Separate Exception Handling Code](#e9)
-10. [Push Error Handling Responsibility Upwards](#e10)
-11. [Exception Logging](#e11)
-12. [Always include Message](#e12)
-13. [Treating Runtime Exceptions](#e13)
-15. [Finally Blocks](#e15)
+10. [Exception Logging and Alerting](#e11)
+11. [Treating Runtime Exceptions](#e13)
+12. [Finally Blocks](#e15)
 
 
 ### <a name="e1"></a> Use Specific Exceptions
@@ -483,6 +481,7 @@ public String httpCall(String url) {
 }
 ```
 
+
 ### <a name="e9"></a> Separate Exception Handling Code
 
 DO - Separate excetion handling code away from busines logic.
@@ -524,49 +523,45 @@ public void creditAccount(byte[] accountNumber, int amount) {
 
     Account account = null;
 
+    // Visually hard to follow. Execution could be trickey as well (Notice the
+    // return statements within the catch blocks)
     try {
         account = retrieveAccount(accountNumber);
     } catch (AccountNumberNotFoundException annfe) {
         // ...
-        return;
+        return; // <- sneaky
     } catch (AccountNumberNullException anne) {
         // ...
-        return;
+        return; // <- sneaky
     }
 
     try {
         account.credit(amount);
     } catch (InvalidBalanceException ibe) {
         // ...
-        return;
+        return; // <- !
     }
 
     try {
         commitTransaction();
     } catch (TransactionRollbackException tre) {
         // ...
-        return;
+        return; // <- !
     }
 }
 ```
 
-### <a name="e10"></a> Push Error Handling Responsibility Upwards
-
-DO - Refrain from handling exceptions in code that is not responsible for interfacing with a user.  Code that does not interface with a user should still catch underlying exception and wrap them as mentioned before.
-
-DONT - Attempt to handle exceptions at every place within your code.
-
-### <a name="e11"></a> Logging
+### <a name="e11"></a> Logging and Alerting
 
 DO - Only log exceptions once at the time the exception is finally handled.
 
+DO - Add as much information regarding why the exception happened in order to make debugging easier.
+
+DO - Alert the user with a message that contains no sensitive information about the program.
+
 DONT - Log an exception and then throw it to the next method.
 
-### <a name="e12"></a> Always include Message
-
-DO - Always include a detailed message of why an exception occurred.  This message is meant only for programmer's eyes and should not be seen by the outside world.
-
-DONT - Leave out message or let message's contents be visible to the user.
+DONT - Alert the user with the exception's message or any other sensitive information.
 
 ### <a name="e13"></a> Treating Runtime Exceptions
 
@@ -578,4 +573,45 @@ DONT - Rely on runtime exceptions as a form of exception handling with a program
 
 DO - Use finally blocks to prevent resource leaks.
 
+```java
+/**
+ * Gets the contents of a webPage.
+ */
+public String getContents(String url) throws ServerAccessException {
+    HttpUrlConnection connection = null;
+
+    try {
+        connection = openConnection(url);
+
+        return Utils.inputStreamToString(connection.getInputStream());
+
+    } finally {
+        if (connection != null) {
+            connection.disconnect();
+        }
+    }
+}
+```
+
 DONT - Try to account for resource closing in normal execution.
+
+
+```java
+/**
+ * Gets the contents of a webPage.
+ */
+public String getContents(String url) throws ServerAccessException {
+    HttpUrlConnection connection = openConnection(url);
+
+    try {
+        String response = Utils.inputStreamToString(
+                            connection.getInputStream());
+
+        return response;
+
+    } catch (InvalidCharacterEncodingException e) {
+        connection.disconnect();
+        throw e;
+    }
+}
+```
