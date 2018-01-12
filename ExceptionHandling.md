@@ -230,7 +230,117 @@ public Account retrieveAccount(int accountNumber) throws InvalidInputException, 
 ```
 
 ### <a name="e5"></a> Catch Specific Exceptions
+
+DO - Use different exception handling blocks for different classes if they must be handled in different ways.
+
+```java
+/**
+ * Ok button handler.
+ */
+public void onOkButtonClicked() {
+
+    Input input = this.getInput();
+
+    try {
+        this.client.callServer(input);
+
+    } catch (InputInvalidException iie) {
+        messageUser("Input was invalid");
+
+    } catch (ServerUnavailableException sue) {
+        this.logger.logException(sue);
+        messageUser("Server was unavailable at this time.");
+    }
+}
+```
+
+DONT - Handle exceptions in the same catch blocks that require different exception handling behavior.
+
+```java
+/**
+ * Ok button handler.
+ */
+public void onOkButtonClicked() {
+
+    Input input = this.getInput();
+
+    try {
+        this.client.callServer(input);
+
+    } catch (InvalidInputException | ServerUnavailableException e) {
+        // More error prone!  What if we accidentally performed actions for
+        // one exception that we didnt actually want to?
+        if (e instanceof InvalidInputException) {
+            messageUser("Input was invalid");
+        }
+        if (e instanceof ServerUnavailableException) {
+            this.logger.logException(e);
+            messageUser("Server was unavailable at this time.");
+        }
+    }
+}
+```
+
+
 ### <a name="e6"></a> Caller Catches Exceptions
+
+DO - The caller of a method should be responsible for any exception handling routines, no exception handling (logging/message displaying/etc.) should be done by callee code.
+
+```java
+/**
+ * Displays the user's information on the screen.
+ */
+public void displayUser(byte[] accountNumber) {
+    try {
+        User user = otherClass.retrieveUser(accountNumber);
+        setFormValue(user.getName());
+    } catch (ServerUnavailableException e) {
+        logException(e);
+        message("Server was unavailable ...");
+    }
+}
+
+/**
+ * Gets the user from the database.
+ */
+public User retrieveUser(byte[] accountNumber) throws ServerUnavailableException {
+    try {
+        Response resp = httpCall('/someUrl', toJson(accountNumber));
+        return parseToUser(resp);
+    } catch (HttpResponseException hre) {
+        throw new ServerUnavailableException("could not reach /someUrl", hre);
+    }
+}
+```
+
+DONT - Attempt to handle an exception as a callee.  Predicting the future of how some code could be used is pretty hard.
+
+```java
+/**
+ * Displays the user's information on the screen.
+ */
+public void displayUser(byte[] accountNumber) {
+    User user = otherClass.retrieveUser(accountNumber);
+    if (user != null) {
+        setFormValue(user.getName());
+    }
+}
+
+/**
+ * Gets the user from the database.
+ */
+public User retrieveUser(byte[] accountNumber) throws ServerUnavailableException {
+    try {
+        Response resp = httpCall('/someUrl', toJson(accountNumber));
+        return parseToUser(resp);
+    } catch (HttpResponseException hre) {
+        log(hre);
+        message("Server was unavailable...");
+        return null;
+    }
+}
+```
+
 ### <a name="e7"></a> Callee Makes No Assumptions of Input
 ### <a name="e8"></a> Return Only Valid Things
 ### <a name="e9"></a> Prevent Normal Execution on Error
