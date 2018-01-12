@@ -18,12 +18,10 @@ an example for a proper use, and an example for improper use.
 8. [Return Only Valid Things](#e8)
 9. [Separate Exception Handling Code](#e9)
 10. [Push Error Handling Responsibility Upwards](#e10)
-11. [Logging and Throwing](#e11)
+11. [Exception Logging](#e11)
 12. [Always include Message](#e12)
 13. [Treating Runtime Exceptions](#e13)
-14. [Exception Logging](#e14)
 15. [Finally Blocks](#e15)
-16. [RuntimeExceptions in the JDK](#e16)
 
 
 ### <a name="e1"></a> Use Specific Exceptions
@@ -553,9 +551,31 @@ public void creditAccount(byte[] accountNumber, int amount) {
 ```
 
 ### <a name="e10"></a> Push Error Handling Responsibility Upwards
-### <a name="e11"></a> Logging and Throwing
+
+DO - Refrain from handling exceptions in code that is not responsible for interfacing with a user.  Code that does not interface with a user should still catch underlying exception and wrap them as mentioned before.
+
+DONT - Attempt to handle exceptions at every place within your code.
+
+### <a name="e11"></a> Logging
+
+DO - Only log exceptions once at the time the exception is finally handled.
+
+DONT - Log an exception and then throw it to the next method.
+
 ### <a name="e12"></a> Always include Message
+
+DO - Always include a detailed message of why an exception occurred.  This message is meant only for programmer's eyes and should not be seen by the outside world.
+
+DONT - Leave out message or let message's contents be visible to the user.
+
 ### <a name="e13"></a> Treating Runtime Exceptions
-### <a name="e14"></a> Exception Logging
+
+DO - Treat all runtime exceptions thrown by methods as bugs with a program.
+
+DONT - Rely on runtime exceptions as a form of exception handling with a program.
+
 ### <a name="e15"></a> Finally Blocks
-### <a name="e16"></a> RuntimeExceptions in the JDK
+
+DO - Use finally blocks to prevent resource leaks.
+
+DONT - Try to account for resource closing in normal execution.
