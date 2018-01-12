@@ -14,7 +14,7 @@ an example for a proper use, and an example for improper use.
 4. [Document Exceptions](#e4)
 5. [Catch Specific Exceptions](#e5)
 6. [Caller Catches Exceptions](#e6)
-7. [Callee Makes No Assumptions of Input](#e7)
+7. [Assumptions of Input](#e7)
 8. [Return Only Valid Things](#e8)
 9. [Prevent Normal Execution on Error](#e9)
 10. [Push Error Handling Responsibility Upwards](#e10)
@@ -300,6 +300,8 @@ public void displayUser(byte[] accountNumber) {
     }
 }
 
+// Below is in some other class
+
 /**
  * Gets the user from the database.
  */
@@ -326,6 +328,8 @@ public void displayUser(byte[] accountNumber) {
     }
 }
 
+// Below is in some other class.
+
 /**
  * Gets the user from the database.
  */
@@ -341,7 +345,66 @@ public User retrieveUser(byte[] accountNumber) throws ServerUnavailableException
 }
 ```
 
-### <a name="e7"></a> Callee Makes No Assumptions of Input
+### <a name="e7"></a> Assumptions of Input
+
+DO - Callee must document all assumptions made on the input that it recieves
+from other methods.  If no documentation is specified, the caller should assume that any input is valid, and an exception will be thrown to handle bad input.
+
+```java
+/**
+ * Displays the contents of a web page given a url.
+ */
+public void urlClicked(String url) {
+    url = nullRemove(url);
+
+    try {
+        String response = httpCall(url);
+        setBodyOfPage(response);
+
+    } catch (PageNotFoundException e) {
+        log(e);
+        message("...");
+    }
+}
+
+/**
+ * HTTP Call method.
+ *
+ * This method assumes that url is not null.
+ */
+public String httpCall(String url) throws PageNotFoundException {
+    String fullUrl = "http://" + url.toLowerCase();
+    return doGET(fullUrl);
+}
+```
+
+DON'T - Make undocumented assumptions of any data within a method.
+
+```java
+/**
+ * Displays the contents of a web page given a url.
+ */
+public void urlClicked(String url) {
+    try {
+        // Notice! url could potentially be null.
+        String response = httpCall(url);
+        setBodyOfPage(response);
+
+    } catch (PageNotFoundException e) {
+        log(e);
+        message("...");
+    }
+}
+
+/**
+ * HTTP Call method.
+ */
+public String httpCall(String url) throws PageNotFoundException {
+    // Potential Runtime Exception Here!
+    String fullUrl = "http://" + url.toLowerCase();
+    return doGET(fullUrl);
+}
+```
 ### <a name="e8"></a> Return Only Valid Things
 ### <a name="e9"></a> Prevent Normal Execution on Error
 ### <a name="e10"></a> Push Error Handling Responsibility Upwards
