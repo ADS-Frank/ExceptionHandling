@@ -290,6 +290,10 @@ DO - The caller of a method should be responsible for any exception handling rou
 ```java
 /**
  * Displays the user's information on the screen.
+ *
+ * This method assumes that the accountNumber is valid.
+ *
+ * @param accountNumber - the account number of the user to display.
  */
 public void displayUser(byte[] accountNumber) {
     try {
@@ -305,6 +309,15 @@ public void displayUser(byte[] accountNumber) {
 
 /**
  * Gets the user from the database.
+ *
+ * This method assumes that the accountNumber is valid.
+ *
+ * @param accountNumber - the account number of the user to display.
+ *
+ * @return - The user that was retrieved.
+ *
+ * @throws ServerUnavailableException - if the server was not reachable at the
+ *     time of the method call.
  */
 public User retrieveUser(byte[] accountNumber)
         throws ServerUnavailableException {
@@ -322,6 +335,10 @@ DONT - Attempt to handle an exception as a callee.  Predicting the future of how
 ```java
 /**
  * Displays the user's information on the screen.
+ *
+ * This method assumes that the accountNumber is valid.
+ *
+ * @param accountNumber - the account number of the user to display.
  */
 public void displayUser(byte[] accountNumber) {
     User user = otherClass.retrieveUser(accountNumber);
@@ -334,6 +351,15 @@ public void displayUser(byte[] accountNumber) {
 
 /**
  * Gets the user from the database.
+ *
+ * This method assumes that the accountNumber is valid.
+ *
+ * @param accountNumber - the account number of the user to display.
+ *
+ * @return - The user that was retrieved.
+ *
+ * @throws ServerUnavailableException - if the server was not reachable at the
+ *     time of the method call.
  */
 public User retrieveUser(byte[] accountNumber)
         throws ServerUnavailableException {
@@ -374,6 +400,12 @@ public void urlClicked(String url) {
  * HTTP Call method.
  *
  * This method assumes that url is not null.
+ *
+ * @param url - The url to retrieve.
+ *
+ * @return - the contents at that endpoint.
+ *
+ * @throws PageNotFoundException - the the page is not locatable.
  */
 public String httpCall(String url) throws PageNotFoundException {
     String fullUrl = "http://" + url.toLowerCase();
@@ -401,6 +433,12 @@ public void urlClicked(String url) {
 
 /**
  * HTTP Call method.
+ *
+ * @param url - The url to retrieve.
+ *
+ * @return - the contents at that endpoint.
+ *
+ * @throws PageNotFoundException - the the page is not locatable.
  */
 public String httpCall(String url) throws PageNotFoundException {
     // Potential Runtime Exception Here!
@@ -435,6 +473,12 @@ public void urlClicked(String url) {
  * HTTP Call method.
  *
  * This method assumes that url is not null.
+ *
+ * @param url - The url to retrieve.
+ *
+ * @return - the contents at that endpoint.
+ *
+ * @throws PageNotFoundException - the the page is not locatable.
  */
 public String httpCall(String url) throws PageNotFoundException {
     String fullUrl = "http://" + url.toLowerCase();
@@ -465,10 +509,13 @@ public void urlClicked(String url) {
     setBodyOfPage(response);
 }
 
+
 /**
  * HTTP Call method.
  *
- * This method assumes that url is not null.
+ * @param url - The url to retrieve.
+ *
+ * @return - the contents at that endpoint.
  */
 public String httpCall(String url) {
     String fullUrl = "http://" + url.toLowerCase();
@@ -489,6 +536,10 @@ DO - Separate excetion handling code away from busines logic.
 ```java
 /**
  * Routine for crediting an account.
+ *
+ * @param accountNumber - the account number to credit.
+ *
+ * @param amount - the amount to credit by.
  */
 public void creditAccount(byte[] accountNumber, int amount) {
     try {
@@ -517,6 +568,10 @@ DONT - Mix exception handling code and busienss logic.
 ```java
 /**
  * Routine for crediting an account.
+ *
+ * @param accountNumber - the account number to credit.
+ *
+ * @param amount - the amount to credit by.
  */
 public void creditAccount(byte[] accountNumber, int amount) {
     beginTransaction();
@@ -576,8 +631,22 @@ DO - Use finally blocks to prevent resource leaks.
 ```java
 /**
  * Gets the contents of a webPage.
+ *
+ * This method assumes that url is non null.
+ *
+ * @param url - the url to retireve the contents of.
+ *
+ * @return - the contents of the web page.
+ *
+ * @throws ServerAccessException - If the server is unavailable at the time
+ *      the method call.
+ *
+ * @throws InvalidCharacterEncodingException - If the server returned content
+ *      that we do not know how to decode.
  */
-public String getContents(String url) throws ServerAccessException {
+public String getContents(String url)
+        throws ServerAccessException, InvalidCharacterEncodingException {
+
     HttpUrlConnection connection = null;
 
     try {
@@ -595,23 +664,33 @@ public String getContents(String url) throws ServerAccessException {
 
 DONT - Try to account for resource closing in normal execution.
 
-
 ```java
 /**
  * Gets the contents of a webPage.
+ *
+ * This method assumes that url is non null.
+ *
+ * @param url - the url to retireve the contents of.
+ *
+ * @return - the contents of the web page.
+ *
+ * @throws ServerAccessException - If the server is unavailable at the time
+ *      the method call.
+ *
+ * @throws InvalidCharacterEncodingException - If the server returned content
+ *      that we do not know how to decode.
  */
-public String getContents(String url) throws ServerAccessException {
+public String getContents(String url)
+        throws ServerAccessException, InvalidCharacterEncodingException {
+
     HttpUrlConnection connection = openConnection(url);
 
-    try {
-        String response = Utils.inputStreamToString(
-                            connection.getInputStream());
+    String response = Utils.inputStreamToString(connection.getInputStream());
 
-        return response;
+    // if Utils.inputStreamToString throws an InvalidCharacterEncodingException
+    // then we have a resource leak here
+    connection.disconnect();
 
-    } catch (InvalidCharacterEncodingException e) {
-        connection.disconnect();
-        throw e;
-    }
+    return response;
 }
 ```
