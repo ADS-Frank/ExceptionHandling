@@ -18,13 +18,12 @@ an example for a proper use, and an example for improper use.
 8. [Return Only Valid Things](#e8)
 9. [Separate Exception Handling Code](#e9)
 10. [Exception Logging and Alerting](#e11)
-11. [Treating Runtime Exceptions](#e13)
-12. [Finally Blocks](#e15)
+11. [Finally Blocks](#e15)
 
 
 ### <a name="e1"></a> Use Specific Exceptions
 
-DO - Throw exception instances that are specific and descriptive of the underlying reason for why an exception was thrown.
+DO - Throw exception instances from public methods that are specific and descriptive of the underlying reason for why an exception was thrown.
 
 DO - Define custom types to represent specific exceptions.
 
@@ -47,7 +46,7 @@ public String toUpperCase(String str) throws NullStringException {
 }
 ```
 
-DONT - Throw exception instances that are general such as ```Exception``` or ```NullPointerException```.  Without inspecting the code, they provide the user of the code with no understanding of why an exception was thrown.
+DONT - Throw exception instances that are general such as ```Exception``` or ```NullPointerException``` from public methods.  Without inspecting the code, they provide the user of the code with no understanding of why an exception was thrown.
 
 ```java
 /**
@@ -72,7 +71,7 @@ public String toUpperCase(String str) throws Exception {
 
 ### <a name="e2"></a> Wrap Underlying Exceptions
 
-DO - Wrap underlying exceptions which may be thrown by the code.  This will attach a business meaning to them and make the code more maintainable.
+DO - Wrap underlying exceptions which may be thrown by public methods in the code if doing so will attach a business meaning to them and make the code more maintainable.
 
 ```java
 /**
@@ -94,7 +93,7 @@ public int getLastFourDigitsOfSSN(String ssn) throws InvalidSSNException {
 }
 ```
 
-DONT - Throw base exceptions caught in the program.  These provide not extra meaning as to why the exception was thrown.
+DONT - Throw base exceptions from public methods if they are ambiguous in meaning.
 
 ```java
 /**
@@ -118,7 +117,7 @@ public int getLastFourDigitsOfSSN(String ssn) throws NumberFormatException {
 
 ### <a name="e3"></a> Avoid Runtime Exceptions
 
-DO - Always throw checked exceptions.  The compiler will prevent the code from compiling if an exception case is not properly handled.
+DO - Always throw checked exceptions from public methods.  The compiler will prevent the code from compiling if an exception case is not properly handled.
 
 ```java
 /**
@@ -147,8 +146,7 @@ public int getLastFourDigitsOfSSN(String ssn) throws InvalidSSNException {
 }
 ```
 
-DONT - Throw unchecked exceptions.  These are unchecked by the compiler
-and thus without the programmers knowledge, could change the execution of the program.
+DONT - Throw unchecked exceptions from public methods.  These are unchecked by the compiler and thus without the programmers knowledge, could change the execution of the program.
 
 ```java
 /**
@@ -305,8 +303,6 @@ public void displayUser(byte[] accountNumber) {
     }
 }
 
-// Below is in some other class
-
 /**
  * Gets the user from the database.
  *
@@ -346,8 +342,6 @@ public void displayUser(byte[] accountNumber) {
         setFormValue(user.getName());
     }
 }
-
-// Below is in some other class.
 
 /**
  * Gets the user from the database.
@@ -509,7 +503,6 @@ public void urlClicked(String url) {
     setBodyOfPage(response);
 }
 
-
 /**
  * HTTP Call method.
  *
@@ -614,15 +607,96 @@ DO - Add as much information regarding why the exception happened in order to ma
 
 DO - Alert the user with a message that contains no sensitive information about the program.
 
+```java
+/**
+ * Displays the user's information on the screen.
+ *
+ * This method assumes that the accountNumber is valid.
+ *
+ * @param accountNumber - the account number of the user to display.
+ */
+public void displayUser(byte[] accountNumber) {
+    try {
+        User user = otherClass.retrieveUser(accountNumber);
+        setFormValue(user.getName());
+    } catch (ServerUnavailableException e) {
+        logException(e);
+        messageUser("Server was unavailable at this time. " +
+            "Please try again at a later time.");
+    }
+}
+
+/**
+ * Gets the user from the database.
+ *
+ * This method assumes that the accountNumber is valid.
+ *
+ * @param accountNumber - the account number of the user to display.
+ *
+ * @return - The user that was retrieved.
+ *
+ * @throws ServerUnavailableException - if the server was not reachable at the
+ *     time of the method call.
+ */
+public User retrieveUser(byte[] accountNumber)
+        throws ServerUnavailableException {
+    try {
+        Response resp = httpCall('/someUrl', toJson(accountNumber));
+        return parseToUser(resp);
+    } catch (HttpResponseException hre) {
+        throw new ServerUnavailableException("could not reach /someUrl", hre);
+    }
+}
+```
+
 DONT - Log an exception and then throw it to the next method.
 
 DONT - Alert the user with the exception's message or any other sensitive information.
 
-### <a name="e13"></a> Treating Runtime Exceptions
+```java
+/**
+ * Displays the user's information on the screen.
+ *
+ * This method assumes that the accountNumber is valid.
+ *
+ * @param accountNumber - the account number of the user to display.
+ */
+public void displayUser(byte[] accountNumber) {
+    try {
+        User user = otherClass.retrieveUser(accountNumber);
+        setFormValue(user.getName());
+    } catch (ServerUnavailableException e) {
+        logException(e);
+        // What if this message has sensitive information?
+        messageUser(e.getMessage());
+    }
+}
 
-DO - Treat all runtime exceptions thrown by methods as bugs with a program.
+/**
+ * Gets the user from the database.
+ *
+ * This method assumes that the accountNumber is valid.
+ *
+ * @param accountNumber - the account number of the user to display.
+ *
+ * @return - The user that was retrieved.
+ *
+ * @throws ServerUnavailableException - if the server was not reachable at the
+ *     time of the method call.
+ */
+public User retrieveUser(byte[] accountNumber)
+        throws ServerUnavailableException {
+    try {
+        Response resp = httpCall('/someUrl', toJson(accountNumber));
+        return parseToUser(resp);
+    } catch (HttpResponseException hre) {
+        // How many exceptions does it look like were thrown?
+        logException(hre);
+        throw new ServerUnavailableException("could not reach /someUrl", hre);
+    }
+}
+```
 
-DONT - Rely on runtime exceptions as a form of exception handling with a program.
 
 ### <a name="e15"></a> Finally Blocks
 
